@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  InfluxQL language definition (InfluxDB 1.x). Used by the query editor for IntelliSense (Ctrl+Space)
+  and syntax colors. Keyword entries may be several words ("SHOW TAG KEYS"); functions are offered as NAME().
+  Single-word keywords are also treated as reserved: identifiers with those names are inserted in double quotes.
+-->
+<ConfigLanguage name="InfluxQL" StartComment="--" CaseInsensitive="true">
+  <Extensions>
+    <Extension>.influxql</Extension>
+    <Extension>.flux</Extension>
+  </Extensions>
+
+  <Formats>
+    <Format Name="KeyWord" Color="Blue" Bold="true" />
+    <Format Name="Function" Color="DarkMagenta" Bold="false" />
+    <Format Name="String" Color="Red" />
+    <Format Name="Comment" Color="Green" Italic="true" />
+  </Formats>
+
+  <Lexems>
+    <!-- InfluxQL keywords and statements -->
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SELECT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="FROM" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="WHERE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="AND" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="OR" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="NOT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="AS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="INTO" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ON" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="IN" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="GROUP BY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ORDER BY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ASC" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DESC" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="LIMIT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SLIMIT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="OFFSET" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SOFFSET" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="FILL" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="TIME" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="TZ" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="NULL" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="NONE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="PREVIOUS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="LINEAR" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="TRUE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="FALSE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW DATABASES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW MEASUREMENTS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW SERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW TAG KEYS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW TAG VALUES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW FIELD KEYS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW RETENTION POLICIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW CONTINUOUS QUERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW USERS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW GRANTS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW QUERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW SHARDS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW SHARD GROUPS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW STATS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW DIAGNOSTICS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW SUBSCRIPTIONS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW SERIES CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW MEASUREMENT CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW TAG KEY CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW TAG VALUES CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHOW FIELD KEY CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="WITH" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="WITH KEY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="WITH MEASUREMENT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="KEY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="KEYS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="FIELD" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="TAG" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="MEASUREMENT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="MEASUREMENTS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DATABASE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DATABASES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CARDINALITY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="EXACT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE DATABASE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE RETENTION POLICY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE CONTINUOUS QUERY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE USER" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CREATE SUBSCRIPTION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP DATABASE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP MEASUREMENT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP SERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP SHARD" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP RETENTION POLICY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP CONTINUOUS QUERY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP USER" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DROP SUBSCRIPTION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DELETE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ALTER" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ALTER RETENTION POLICY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="GRANT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="REVOKE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SET PASSWORD FOR" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="KILL QUERY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="EXPLAIN" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="EXPLAIN ANALYZE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ANALYZE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="RETENTION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="POLICY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="POLICIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DURATION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="REPLICATION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHARD" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SHARDS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DEFAULT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="CONTINUOUS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="QUERY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="QUERIES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="RESAMPLE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="EVERY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="FOR" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="BEGIN" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="END" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="USER" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="USERS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="PASSWORD" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="PRIVILEGES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ALL" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ALL PRIVILEGES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="READ" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="WRITE" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="TO" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ADMIN" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SUBSCRIPTION" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SUBSCRIPTIONS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DESTINATIONS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="ANY" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DISTINCT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="INF" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="INSERT" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="VALUES" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="NAME" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="STATS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="DIAGNOSTICS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="GRANTS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="GROUPS" />
+    <Lexem TypeXML="KeyWord" FormatName="KeyWord" BeginBlock="SET" />
+
+    <!-- InfluxQL functions: aggregations, selectors, transformations, predictors, technical analysis -->
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="COUNT" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="DISTINCT" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="INTEGRAL" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MEAN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MEDIAN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MODE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="SPREAD" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="STDDEV" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="SUM" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="BOTTOM" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="FIRST" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="LAST" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MAX" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MIN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="PERCENTILE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="SAMPLE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="TOP" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ABS" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ACOS" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ASIN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ATAN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ATAN2" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="CEIL" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="COS" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="CUMULATIVE_SUM" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="DERIVATIVE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="DIFFERENCE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ELAPSED" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="EXP" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="FLOOR" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="HISTOGRAM" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="LN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="LOG" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="LOG2" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="LOG10" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="MOVING_AVERAGE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="NON_NEGATIVE_DERIVATIVE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="NON_NEGATIVE_DIFFERENCE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="POW" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="ROUND" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="SIN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="SQRT" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="TAN" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="HOLT_WINTERS" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="HOLT_WINTERS_WITH_FIT" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="CHANDE_MOMENTUM_OSCILLATOR" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="EXPONENTIAL_MOVING_AVERAGE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="DOUBLE_EXPONENTIAL_MOVING_AVERAGE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="KAUFMANS_EFFICIENCY_RATIO" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="KAUFMANS_ADAPTIVE_MOVING_AVERAGE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="TRIPLE_EXPONENTIAL_MOVING_AVERAGE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="TRIPLE_EXPONENTIAL_DERIVATIVE" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="RELATIVE_STRENGTH_INDEX" />
+    <Lexem TypeXML="KeyWord" FormatName="Function" BeginBlock="NOW" />
+  </Lexems>
+</ConfigLanguage>
