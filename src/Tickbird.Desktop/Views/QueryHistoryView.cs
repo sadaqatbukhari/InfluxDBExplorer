@@ -26,6 +26,8 @@ public sealed class QueryHistoryView : UserControl
     private readonly DataGrid grid = GridFactory.Create();
     private readonly TextBox search = new() { Watermark = "Search queries, connections and databases…", MinWidth = 280, FontSize = 12 };
     private readonly ComboBox connectionBox = new() { MinWidth = 180, FontSize = 12 };
+    private readonly CheckBox favoritesOnly = new() { Content = "Favorites only", FontSize = 12 };
+    private readonly Button favoriteButton = new() { Padding = new Thickness(10, 4), FontSize = 12 };
     private readonly TextBox preview = new()
     {
         IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, Height = 120, FontSize = 12,
@@ -41,35 +43,42 @@ public sealed class QueryHistoryView : UserControl
         this.open = open;
         Background = Brush.Parse("#F1F7FD");
 
-        GridFactory.SetColumns(grid, new[] { "Run at", "Connection", "Database", "Status", "Duration", "Rows", "Query" });
+        GridFactory.SetColumns(grid, new[] { "★", "Run at", "Connection", "Database", "Status", "Duration", "Rows", "Query" });
+        grid.Columns[0].Width = new DataGridLength(34);
         grid.Columns[^1].Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         grid.DoubleTapped += async (_, _) => await OpenSelectedAsync();
         grid.KeyDown += async (_, e) =>
         {
             if (e.Key == Key.Enter) { e.Handled = true; await OpenSelectedAsync(); }
-            else if (e.Key == Key.Delete) { e.Handled = true; DeleteSelected(); }
+            else if (e.Key == Key.Delete) { e.Handled = true; await DeleteSelectedAsync(); }
         };
         grid.SelectionChanged += (_, _) =>
         {
             var entry = Selected().FirstOrDefault();
             preview.Text = entry == null ? "" : entry.Query + (entry.Error != null ? "\n\n-- Error: " + entry.Error : "");
+            UpdateFavoriteButton();
         };
 
         searchDelay.Tick += (_, _) => { searchDelay.Stop(); Refresh(); };
         search.TextChanged += (_, _) => { searchDelay.Stop(); searchDelay.Start(); };
         search.KeyDown += (_, e) => { if (e.Key == Key.Escape) search.Text = ""; };
         connectionBox.SelectionChanged += (_, _) => { if (!binding) Refresh(); };
+        favoritesOnly.IsCheckedChanged += (_, _) => Refresh();
+        favoriteButton.Click += (_, _) => ToggleFavorite();
+        ToolTip.SetTip(favoriteButton, "Mark the selected queries as favorites, or remove the mark");
+        ToolTip.SetTip(favoritesOnly, "Show only your favorite queries");
+        UpdateFavoriteButton();
 
         var openButton = Action("Open in New Query", "Open the selected query in a new query tab (double-click or Enter)", async () => await OpenSelectedAsync());
         var copy = Action("Copy", "Copy the selected queries", async () => await CopySelectedAsync());
-        var delete = Action("Delete", "Remove the selected entries (Delete)", () => { DeleteSelected(); return Task.CompletedTask; });
-        var clear = Action("Clear All", "Remove every entry from the history", () => { history.Clear(); return Task.CompletedTask; });
+        var delete = Action("Delete", "Remove the selected entries (Delete)", DeleteSelectedAsync);
+        var clear = Action("Clear All", "Remove every entry from the history", ClearAllAsync);
 
         var export = Action("Export…", "Save the selected queries, or all of them when none are selected, to a file", async () => await ExportAsync());
         var import = Action("Import…", "Add the queries of an exported history file", async () => await ImportAsync());
 
         var toolbar = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
-        foreach (var control in new Control[] { search, connectionBox, openButton, copy, delete, clear, export, import })
+        foreach (var control in new Control[] { search, connectionBox, favoritesOnly, favoriteButton, openButton, copy, delete, clear, export, import })
         {
             control.Margin = new Thickness(0, 2, 8, 2);
             control.VerticalAlignment = VerticalAlignment.Center;
@@ -113,11 +122,13 @@ public sealed class QueryHistoryView : UserControl
         var connectionId = name == null || name == AllConnections
             ? null
             : history.Entries.FirstOrDefault(e => e.ConnectionName == name)?.ConnectionId;
-        Shown = history.Search(search.Text, connectionId);
+        Shown = history.Search(search.Text, connectionId, favoritesOnly.IsChecked == true);
         var settings = TickbirdApp.Current.Settings;
         var timeFormat = $"{TickbirdSettings.ResolveDateFormat(settings.DateFormat)} {settings.TimeFormat}";
+        var keepSelected = Selected().Select(e => e.Id).ToHashSet();
         GridFactory.SetRows(grid, Shown.Select(e => new GridRow(new[]
         {
+            e.IsFavorite ? "★" : "",
             e.RunAtUtc.ToLocalTime().ToString(timeFormat, CultureInfo.CurrentCulture),
             e.ConnectionName,
             e.Database,
@@ -126,9 +137,13 @@ public sealed class QueryHistoryView : UserControl
             e.Status == QueryRunStatus.Succeeded ? e.Rows.ToString("N0", CultureInfo.CurrentCulture) : "",
             e.OneLine.Length > 400 ? e.OneLine[..399] + "…" : e.OneLine
         }, e)));
+        if (keepSelected.Count > 0)
+            foreach (var row in grid.ItemsSource!.Cast<GridRow>().Where(r => r.Tag is QueryHistoryEntry e && keepSelected.Contains(e.Id)))
+                grid.SelectedItems.Add(row);
+        UpdateFavoriteButton();
         status.Text = history.Entries.Count == 0
             ? (settings.KeepQueryHistory ? "No queries yet. Queries you run from a query tab appear here." : "Query history is off (Settings › Keep Query History).")
-            : $"{Shown.Count:N0} of {history.Entries.Count:N0} queries";
+            : $"{Shown.Count:N0} of {history.Entries.Count:N0} queries" + (history.FavoriteCount > 0 ? $" · {history.FavoriteCount:N0} favorite{(history.FavoriteCount == 1 ? "" : "s")}" : "");
     }
 
     private void BindConnections()
@@ -196,7 +211,82 @@ public sealed class QueryHistoryView : UserControl
         }
     }
 
-    private void DeleteSelected() => history.Remove(Selected().Select(e => e.Id));
+    /// <summary>Marks the selected queries as favorites, or removes the mark when they all are favorites already.</summary>
+    public void ToggleFavorite()
+    {
+        var selected = Selected();
+        if (selected.Count == 0) return;
+        history.SetFavorite(selected.Select(e => e.Id), favorite: !selected.All(e => e.IsFavorite));
+    }
+
+    private void UpdateFavoriteButton()
+    {
+        var selected = Selected();
+        var allFavorites = selected.Count > 0 && selected.All(e => e.IsFavorite);
+        favoriteButton.Content = allFavorites ? "★ Remove Favorite" : "☆ Add Favorite";
+        favoriteButton.IsEnabled = selected.Count > 0;
+    }
+
+    /// <summary>
+    /// Deletes the selected queries. Favorites among them are kept unless the user ticks the box in the
+    /// confirmation (shown only when the selection contains favorites).
+    /// </summary>
+    public async Task DeleteSelectedAsync()
+    {
+        var selected = Selected();
+        if (selected.Count == 0) return;
+        var favorites = selected.Count(e => e.IsFavorite);
+        if (favorites == 0)
+        {
+            history.Remove(selected.Select(e => e.Id));
+            return;
+        }
+
+        var ids = selected.Select(e => e.Id).ToList();
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner == null) { history.Remove(ids, includeFavorites: false); return; }
+
+        if (favorites == selected.Count)
+        {
+            var all = await Dialogs.ConfirmWithOptionAsync(owner, "Delete Favorite Queries",
+                favorites == 1 ? "The selected query is a favorite. Delete it anyway?" : $"All {favorites:N0} selected queries are favorites. Delete them anyway?",
+                option: null);
+            if (all.Confirmed) history.Remove(ids);
+            return;
+        }
+
+        var result = await Dialogs.ConfirmWithOptionAsync(owner, "Delete Queries",
+            $"Delete the {selected.Count:N0} selected queries? {favorites:N0} of them {(favorites == 1 ? "is a favorite" : "are favorites")} and will be kept unless you tick the box below.",
+            favorites == 1 ? "Also delete the favorite query" : $"Also delete the {favorites:N0} favorite queries");
+        if (result.Confirmed) history.Remove(ids, includeFavorites: result.Checked);
+    }
+
+    /// <summary>Clears the history after asking. Favorites are kept unless the user ticks the box.</summary>
+    public async Task ClearAllAsync()
+    {
+        var total = history.Entries.Count;
+        if (total == 0) return;
+        var favorites = history.FavoriteCount;
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner == null) { history.Clear(includeFavorites: false); return; }
+
+        var others = total - favorites;
+        if (favorites == 0 || others == 0)
+        {
+            var all = await Dialogs.ConfirmWithOptionAsync(owner, "Clear Query History",
+                favorites == 0
+                    ? $"Delete all {total:N0} queries from the history? This cannot be undone."
+                    : $"Every query in the history is a favorite. Delete all {total:N0} of them? This cannot be undone.",
+                option: null, ok: "Clear All");
+            if (all.Confirmed) history.Clear();
+            return;
+        }
+
+        var result = await Dialogs.ConfirmWithOptionAsync(owner, "Clear Query History",
+            $"Delete the {others:N0} queries that are not favorites? Your {favorites:N0} favorite{(favorites == 1 ? "" : "s")} will be kept unless you tick the box below. This cannot be undone.",
+            $"Also delete the {favorites:N0} favorite{(favorites == 1 ? "" : "s")}", ok: "Clear All");
+        if (result.Confirmed) history.Clear(includeFavorites: result.Checked);
+    }
 
     private static string StatusText(QueryRunStatus status) => status switch
     {

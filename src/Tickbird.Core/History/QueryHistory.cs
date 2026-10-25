@@ -25,6 +25,9 @@ public sealed class QueryHistoryEntry
     public QueryRunStatus Status { get; set; }
     public string? Error { get; set; }
 
+    /// <summary>A favorite is kept when entries expire, when the history is full and when the history is cleared (unless you ask).</summary>
+    public bool IsFavorite { get; set; }
+
     /// <summary>The query on one line, for lists.</summary>
     [JsonIgnore]
     public string OneLine => string.Join(" ", Query.Split(new[] { '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim())).Trim();
@@ -37,6 +40,7 @@ public sealed record QueryHistoryImportResult(int Added, int Updated, int Skippe
 /// The most recent queries run from the editor, newest first, saved as JSON next to the settings file.
 /// Running the same query again on the same connection and database moves it to the top instead of adding a copy.
 /// Entries can expire after a number of days (0 keeps them always), and the history can be exported and imported.
+/// Queries can be marked as favorites: they never expire and are the last to go when the history is full.
 /// </summary>
 public sealed class QueryHistory
 {
@@ -93,7 +97,38 @@ public sealed class QueryHistory
     {
         if (RetentionDays <= 0) return 0;
         var cutoff = utcNow().AddDays(-RetentionDays);
-        return entries.RemoveAll(e => e.RunAtUtc < cutoff);
+        return entries.RemoveAll(e => !e.IsFavorite && e.RunAtUtc < cutoff);
+    }
+
+    /// <summary>
+    /// Drops the oldest entries that are not favorites until the history fits its capacity. The entry just added
+    /// (<paramref name="keep"/>) is never dropped, so a full list of favorites can grow instead of losing a new query.
+    /// </summary>
+    private void TrimToCapacity(QueryHistoryEntry? keep = null)
+    {
+        while (entries.Count > Capacity)
+        {
+            var index = entries.FindLastIndex(e => !e.IsFavorite && !ReferenceEquals(e, keep));
+            if (index < 0) break;
+            entries.RemoveAt(index);
+        }
+    }
+
+    /// <summary>How many entries are favorites.</summary>
+    public int FavoriteCount => entries.Count(e => e.IsFavorite);
+
+    /// <summary>Marks or unmarks entries as favorites. Returns how many entries changed.</summary>
+    public int SetFavorite(IEnumerable<string> ids, bool favorite)
+    {
+        var set = ids.ToHashSet();
+        var changed = 0;
+        foreach (var entry in entries.Where(e => set.Contains(e.Id) && e.IsFavorite != favorite))
+        {
+            entry.IsFavorite = favorite;
+            changed++;
+        }
+        if (changed > 0) SaveAndNotify();
+        return changed;
     }
 
     /// <summary>
@@ -136,19 +171,26 @@ public sealed class QueryHistory
         var cutoff = RetentionDays > 0 ? utcNow().AddDays(-RetentionDays) : DateTime.MinValue;
         foreach (var entry in incoming)
         {
-            if (entry == null || string.IsNullOrWhiteSpace(entry.Query) || entry.RunAtUtc < cutoff) { skipped++; continue; }
+            if (entry == null || string.IsNullOrWhiteSpace(entry.Query) || (entry.RunAtUtc < cutoff && !entry.IsFavorite)) { skipped++; continue; }
             entry.RunAtUtc = entry.RunAtUtc.ToUniversalTime();
             if (string.IsNullOrWhiteSpace(entry.Id)) entry.Id = Guid.NewGuid().ToString("N");
             var existing = entries.FirstOrDefault(e => e.Id == entry.Id || SameQuery(e, entry));
             if (existing == null) { entries.Add(entry); added++; }
-            else if (existing.RunAtUtc < entry.RunAtUtc) { entries[entries.IndexOf(existing)] = entry; updated++; }
+            else if (existing.RunAtUtc < entry.RunAtUtc)
+            {
+                entry.IsFavorite |= existing.IsFavorite;
+                entries[entries.IndexOf(existing)] = entry;
+                updated++;
+            }
+            else if (entry.IsFavorite && !existing.IsFavorite) { existing.IsFavorite = true; updated++; }
             else skipped++;
         }
         if (added + updated > 0)
         {
-            var ordered = entries.OrderByDescending(e => e.RunAtUtc).Take(Capacity).ToList();
+            var ordered = entries.OrderByDescending(e => e.RunAtUtc).ToList();
             entries.Clear();
             entries.AddRange(ordered);
+            TrimToCapacity();
             SaveAndNotify();
         }
         return new QueryHistoryImportResult(added, updated, skipped);
@@ -163,35 +205,36 @@ public sealed class QueryHistory
     {
         if (string.IsNullOrWhiteSpace(entry.Query)) return;
         RemoveExpired();
-        entries.RemoveAll(e => e.ConnectionId == entry.ConnectionId
-                               && string.Equals(e.Database, entry.Database, StringComparison.Ordinal)
-                               && string.Equals(e.Query.Trim(), entry.Query.Trim(), StringComparison.Ordinal));
+        // Running a favorite again keeps it a favorite.
+        if (entries.RemoveAll(e => SameQuery(e, entry) && e.IsFavorite) > 0) entry.IsFavorite = true;
+        entries.RemoveAll(e => SameQuery(e, entry));
         entries.Insert(0, entry);
-        if (entries.Count > Capacity) entries.RemoveRange(Capacity, entries.Count - Capacity);
+        TrimToCapacity(keep: entry);
         SaveAndNotify();
     }
 
-    public void Remove(IEnumerable<string> ids)
+    /// <summary>Removes the entries with these ids. Favorites among them are only removed when <paramref name="includeFavorites"/> is true.</summary>
+    public void Remove(IEnumerable<string> ids, bool includeFavorites = true)
     {
         var set = ids.ToHashSet();
-        if (entries.RemoveAll(e => set.Contains(e.Id)) > 0) SaveAndNotify();
+        if (entries.RemoveAll(e => set.Contains(e.Id) && (includeFavorites || !e.IsFavorite)) > 0) SaveAndNotify();
     }
 
-    public void Clear()
+    /// <summary>Removes every entry. Favorites are kept unless <paramref name="includeFavorites"/> is true.</summary>
+    public void Clear(bool includeFavorites = true)
     {
-        if (entries.Count == 0) return;
-        entries.Clear();
-        SaveAndNotify();
+        if (entries.RemoveAll(e => includeFavorites || !e.IsFavorite) > 0) SaveAndNotify();
     }
 
     /// <summary>
     /// Entries whose query, connection or database contain every word of <paramref name="text"/> (ignoring case),
-    /// optionally only for one connection.
+    /// optionally only for one connection and/or only the favorites.
     /// </summary>
-    public IReadOnlyList<QueryHistoryEntry> Search(string? text, string? connectionId = null)
+    public IReadOnlyList<QueryHistoryEntry> Search(string? text, string? connectionId = null, bool favoritesOnly = false)
     {
         var words = (text ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return entries.Where(e => connectionId == null || e.ConnectionId == connectionId)
+            .Where(e => !favoritesOnly || e.IsFavorite)
             .Where(e => words.All(w => e.Query.Contains(w, StringComparison.OrdinalIgnoreCase)
                                         || (e.ConnectionName?.Contains(w, StringComparison.OrdinalIgnoreCase) ?? false)
                                         || (e.Database?.Contains(w, StringComparison.OrdinalIgnoreCase) ?? false)))

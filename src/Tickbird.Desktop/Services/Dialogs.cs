@@ -24,11 +24,57 @@ public static class Dialogs
         await new MessageWindow(title, message, ok: "OK", cancel: "Cancel").ShowDialog<bool>(owner);
 
     /// <summary>
+    /// A confirmation with a check box under the message (unchecked at first). <paramref name="option"/> is null to
+    /// leave the check box out. Returns whether the user confirmed and whether the box was checked.
+    /// </summary>
+    public static async Task<(bool Confirmed, bool Checked)> ConfirmWithOptionAsync(
+        Window owner, string title, string message, string? option, string ok = "Delete")
+    {
+        var window = new OptionConfirmWindow(title, message, option, ok);
+        var confirmed = await window.ShowDialog<bool>(owner);
+        return (confirmed, confirmed && window.OptionBox.IsChecked == true);
+    }
+
+    /// <summary>
     /// Confirmation for destructive actions: the user must type <paramref name="name"/> exactly before
     /// the action button is enabled. Returns true only when confirmed.
     /// </summary>
     public static async Task<bool> ConfirmByNameAsync(Window owner, string title, string message, string name, string action = "Drop") =>
         await new ConfirmByNameWindow(title, message, name, action).ShowDialog<bool>(owner);
+
+    /// <summary>The window behind <see cref="ConfirmWithOptionAsync"/>.</summary>
+    public sealed class OptionConfirmWindow : Window
+    {
+        public CheckBox OptionBox { get; } = new();
+        public Button ConfirmButton { get; } = new() { MinWidth = 80, IsDefault = true };
+
+        public OptionConfirmWindow(string title, string message, string? option, string ok)
+        {
+            Title = title;
+            Width = 440;
+            SizeToContent = SizeToContent.Height;
+            CanResize = false;
+            WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            ConfirmButton.Content = ok;
+            ConfirmButton.Click += (_, _) => Close(true);
+            var cancel = new Button { Content = "Cancel", MinWidth = 80, IsCancel = true };
+            cancel.Click += (_, _) => Close(false);
+            var buttons = new StackPanel
+            {
+                Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8,
+                Children = { ConfirmButton, cancel }
+            };
+            var content = new StackPanel { Margin = new Thickness(4), Spacing = 14 };
+            content.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+            if (option != null)
+            {
+                OptionBox.Content = option;
+                content.Children.Add(OptionBox);
+            }
+            content.Children.Add(buttons);
+            Content = TickbirdTheme.Card(content);
+        }
+    }
 
     private sealed class MessageWindow : Window
     {
