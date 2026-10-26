@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+    Name="Tickbird"
+    Manufacturer="Cymatic Labs"
+    Version="$(ProductVersion)"
+    UpgradeCode="E65EA62E-2F9F-4AD4-9037-8F44F7B92A73"
+    Scope="perMachine">
+
+    <SummaryInformation Description="Tickbird for InfluxDB 1.x and 3.x" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="Tickbird" />
+    </StandardDirectory>
+
+    <Files Include="$(PublishDir)\**" Directory="INSTALLFOLDER">
+      <Exclude Files="$(PublishDir)\Tickbird.Desktop.exe" />
+      <Exclude Files="$(PublishDir)\**.pdb" />
+    </Files>
+
+    <Component Id="MainExecutableComponent" Directory="INSTALLFOLDER" Guid="*">
+      <File Id="MainExecutable" Source="$(PublishDir)\Tickbird.Desktop.exe" KeyPath="yes">
+        <Shortcut
+          Id="StartMenuShortcut"
+          Directory="ProgramMenuFolder"
+          Name="Tickbird"
+          Description="Manage InfluxDB 1.x and 3.x servers"
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="AppIcon.exe"
+          IconIndex="0"
+          Advertise="yes" />
+      </File>
+    </Component>
+
+    <Component Id="DesktopShortcutComponent"
+               Directory="DesktopFolder"
+               Guid="*"
+               Condition="INSTALLDESKTOPSHORTCUT"
+               Transitive="yes">
+      <Shortcut
+        Id="DesktopShortcut"
+        Name="Tickbird"
+        Description="Manage InfluxDB 1.x and 3.x servers"
+        Target="[#MainExecutable]"
+        WorkingDirectory="INSTALLFOLDER"
+        Icon="AppIcon.exe"
+        IconIndex="0" />
+      <RegistryValue
+        Root="HKCU"
+        Key="Software\Tickbird"
+        Name="DesktopShortcut"
+        Type="integer"
+        Value="1"
+        KeyPath="yes" />
+    </Component>
+
+    <Icon Id="AppIcon.exe" SourceFile="$(sys.SOURCEFILEDIR)..\..\src\Tickbird.Desktop\Assets\AppIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/sadaqatbukhari/Tickbird" />
+    <Property Id="INSTALLDESKTOPSHORTCUT" Value="1" Secure="yes" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <UIRef Id="TickbirdInstallUI" />
+  </Package>
+</Wix>

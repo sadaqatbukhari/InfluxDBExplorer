@@ -1,0 +1,343 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Tickbird.Desktop.ViewModels"
+        xmlns:svc="using:Tickbird.Desktop.Services"
+        x:Class="Tickbird.Desktop.Views.MainWindow"
+        Title="Tickbird" Width="1100" Height="760" MinWidth="700" MinHeight="450"
+        Background="White" Foreground="#1a65a7" FontFamily="Segoe UI" FontSize="14"
+        Icon="avares://Tickbird.Desktop/Assets/AppIcon.ico">
+  <Window.Resources>
+  <svc:IconConverter x:Key="IconConverter" />
+  </Window.Resources>
+  <Window.Styles>
+    <Style Selector="Menu#MainMenu">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="Padding" Value="6,0" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="Menu#MainMenu > MenuItem">
+      <Setter Property="Padding" Value="10,4" />
+    </Style>
+    <!-- Compact, Visual Studio-style toolbar buttons (16px icons). -->
+    <Style Selector="Button.shellTool">
+      <Setter Property="Width" Value="28" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.shellTool:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="#cbdceb" />
+    </Style>
+    <Style Selector="Button.shellTool:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#e3ecf4" />
+    </Style>
+    <Style Selector="Button.shellTool:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="Border.autoHideTab">
+      <Setter Property="Background" Value="#e4edf6" />
+      <Setter Property="BorderBrush" Value="#c9d9e8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="Padding" Value="4,12" />
+      <Setter Property="Margin" Value="0,6,0,0" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.autoHideTab:pointerover">
+      <Setter Property="Background" Value="#cbdceb" />
+    </Style>
+  </Window.Styles>
+  <DockPanel>
+    <Border DockPanel.Dock="Top" Background="White" BorderBrush="#d9e5f0" BorderThickness="0,0,0,1" Padding="16,6">
+      <svc:BrandLogo HorizontalAlignment="Left" />
+    </Border>
+    <Menu DockPanel.Dock="Top" Name="MainMenu">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Import">
+          <MenuItem Header="_Settings..." Click="OnImportSettings" />
+          <MenuItem Header="From _InfluxDB Studio..." Click="OnImportLegacy" />
+        </MenuItem>
+        <MenuItem Header="_Export">
+          <MenuItem Header="_Settings..." Click="OnExportSettings" />
+        </MenuItem>
+        <Separator />
+        <MenuItem Header="E_xit" Click="OnExit" />
+      </MenuItem>
+      <MenuItem Header="_View">
+        <MenuItem Name="MenuObjectExplorer" Header="_Object Explorer" HotKey="F8" Click="OnShowExplorer" />
+        <MenuItem Name="MenuViewToolbar" Header="_Toolbar" Click="OnToggleToolbar" />
+        <MenuItem Name="MenuViewStatusBar" Header="_Status Bar" Click="OnToggleStatusBar" />
+        <Separator />
+        <MenuItem Name="MenuQueryHistory" Header="Query _History" HotKey="Ctrl+Shift+H" Click="OnShowQueryHistory" />
+        <Separator />
+        <MenuItem Header="_Reset Window Layout" Click="OnResetWindowLayout" />
+      </MenuItem>
+      <MenuItem Header="_Connections">
+        <MenuItem Name="MenuRefresh" Header="_Refresh" HotKey="F5" Click="OnRefresh" />
+        <MenuItem Header="_Manage" Click="OnManage" />
+      </MenuItem>
+      <MenuItem Header="_Query">
+        <MenuItem Name="MenuNewQuery" Header="_New Query" Click="OnNewQuery" />
+        <MenuItem Name="MenuOpenQuery" Header="_Open Query..." HotKey="Ctrl+O" Click="OnOpenQuery" />
+        <MenuItem Name="MenuSaveQuery" Header="_Save Query..." HotKey="Ctrl+S" Click="OnSaveQuery" />
+        <Separator />
+        <MenuItem Name="MenuRunQuery" Header="_Run" HotKey="Ctrl+R" Click="OnRunQuery" />
+        <MenuItem Name="MenuStopQuery" Header="S_top" HotKey="Alt+Pause" Click="OnStopQuery" />
+        <Separator />
+        <MenuItem Name="MenuFind" Header="_Find…" InputGesture="Ctrl+F" Click="OnFind" />
+        <MenuItem Name="MenuReplace" Header="R_eplace…" InputGesture="Ctrl+H" Click="OnReplace" />
+        <Separator />
+        <MenuItem Header="Query _History" InputGesture="Ctrl+Shift+H" Click="OnShowQueryHistory" />
+        <MenuItem Name="MenuShowQueries" Header="Show _Queries" Click="OnShowQueries" />
+      </MenuItem>
+      <MenuItem Header="_Settings">
+        <MenuItem Header="_Time Format">
+          <MenuItem Name="Time12" Header="2:30:45 PM  (12 hour)" Click="OnTimeFormat" Tag="12" />
+          <MenuItem Name="Time24" Header="14:30:45  (24 hour)" Click="OnTimeFormat" Tag="24" />
+        </MenuItem>
+        <MenuItem Name="MenuDateFormat" Header="_Date Format">
+          <MenuItem Name="DateSystem" Header="System default  (your regional settings)" Click="OnDateFormat" Tag="system" />
+          <Separator />
+          <MenuItem Name="DateMonth" Header="12/31/2016  mm/dd/yyyy  Month first (US)" Click="OnDateFormat" Tag="M/dd/yyyy" />
+          <MenuItem Name="DateDay" Header="31/12/2016  dd/mm/yyyy  Day first (UK, FR, ES, IT)" Click="OnDateFormat" Tag="d/MM/yyyy" />
+          <MenuItem Name="DateGerman" Header="31.12.2016  dd.mm.yyyy  German (DE, AT, CH, PL, RU)" Click="OnDateFormat" Tag="dd'.'MM'.'yyyy" />
+          <MenuItem Name="DateDotted" Header="31.12.2016  d.m.yyyy  No zero padding (FI, CZ, SK)" Click="OnDateFormat" Tag="d'.'M'.'yyyy" />
+          <MenuItem Name="DateDutch" Header="31-12-2016  dd-mm-yyyy  Dutch (NL)" Click="OnDateFormat" Tag="dd'-'MM'-'yyyy" />
+          <MenuItem Name="DateIso" Header="2016-12-31  yyyy-mm-dd  ISO 8601 (SE, LT)" Click="OnDateFormat" Tag="yyyy'-'MM'-'dd" />
+        </MenuItem>
+        <MenuItem Name="MenuUntrusted" Header="Allow _Untrusted SSL" Click="OnUntrustedSsl" />
+        <Separator />
+        <MenuItem Name="MenuQueryTimeout" Header="Query _Timeout">
+          <MenuItem Header="30 seconds" Click="OnQueryTimeout" Tag="30" />
+          <MenuItem Header="1 minute" Click="OnQueryTimeout" Tag="60" />
+          <MenuItem Header="5 minutes" Click="OnQueryTimeout" Tag="300" />
+          <MenuItem Header="15 minutes" Click="OnQueryTimeout" Tag="900" />
+          <MenuItem Header="1 hour" Click="OnQueryTimeout" Tag="3600" />
+          <MenuItem Header="No limit" Click="OnQueryTimeout" Tag="0" />
+        </MenuItem>
+        <MenuItem Name="MenuKeepHistory" Header="Keep Query _History" Click="OnKeepHistory" />
+        <MenuItem Name="MenuHistoryExpiry" Header="Query History _Expiry">
+          <MenuItem Header="Always keep" Click="OnHistoryExpiry" Tag="0" />
+          <MenuItem Header="1 day" Click="OnHistoryExpiry" Tag="1" />
+          <MenuItem Header="7 days" Click="OnHistoryExpiry" Tag="7" />
+          <MenuItem Header="30 days" Click="OnHistoryExpiry" Tag="30" />
+          <MenuItem Header="90 days" Click="OnHistoryExpiry" Tag="90" />
+          <MenuItem Header="180 days" Click="OnHistoryExpiry" Tag="180" />
+          <MenuItem Header="1 year" Click="OnHistoryExpiry" Tag="365" />
+        </MenuItem>
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_About" Click="OnAbout" />
+      </MenuItem>
+    </Menu>
+
+    <!-- Toolbar resizes with the window: buttons that do not fit move to the "More commands" menu. -->
+    <Border Name="ToolbarHost" DockPanel.Dock="Top" BorderThickness="0,1,0,1" BorderBrush="#d9e5f0" Background="#f7fafd">
+      <DockPanel Margin="8,3">
+        <Button Name="ToolbarOverflowButton" DockPanel.Dock="Right" Classes="shellTool" IsVisible="False"
+                ToolTip.Tip="More commands" Click="OnToolbarOverflow">
+          <TextBlock Text="⋯" FontSize="16" FontWeight="Bold" Foreground="#1a65a7"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Button>
+        <svc:ToolBarPanel Name="ToolBar" Spacing="2" VerticalAlignment="Center" />
+      </DockPanel>
+    </Border>
+
+    <!-- Status bar: compact, and long messages are trimmed to the window width. -->
+    <Border Name="StatusBar" DockPanel.Dock="Bottom" BorderThickness="0,1,0,0" BorderBrush="#d9e5f0" Background="#f0f5fb"
+            Padding="10,0" MinHeight="24">
+      <DockPanel>
+        <TextBlock Name="UpdateNotice" DockPanel.Dock="Right" IsVisible="False" Foreground="DarkGoldenrod" FontSize="12"
+                   VerticalAlignment="Center" Margin="16,0,0,0" MaxWidth="460" TextTrimming="CharacterEllipsis"
+                   TextDecorations="Underline" Cursor="Hand" PointerPressed="OnUpdateNoticeClicked" />
+        <TextBlock Name="StatusText" Text="{Binding Status}" FontSize="12" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" />
+      </DockPanel>
+    </Border>
+
+    <!-- Columns: left auto-hide tabs | left dock | splitter | documents | splitter | right dock | right auto-hide tabs.
+         Widths are set by the docking code (MainWindow.Docking.cs). -->
+    <Grid Name="WorkArea" ColumnDefinitions="Auto,320,4,*,0,0,Auto">
+      <Border Name="LeftAutoHideStrip" Grid.Column="0" Background="#F0F5FB" BorderBrush="#d9e5f0" BorderThickness="0,0,1,0"
+              Padding="3,0" IsVisible="False" />
+      <Border Name="LeftDockHost" Grid.Column="1">
+        <Border Name="ExplorerPane" Background="#F0F5FB" BorderBrush="#d9e5f0" BorderThickness="0,0,1,0">
+          <Border.Resources>
+            <svc:IconConverter x:Key="IconConverter" />
+            <!-- Compact, SSMS-like tree: 16px icons, ~22px rows, small expander chevrons. -->
+            <x:Double x:Key="TreeViewItemMinHeight">22</x:Double>
+            <x:Double x:Key="TreeViewItemIndent">16</x:Double>
+            <x:Double x:Key="TreeViewItemExpandCollapseChevronSize">9</x:Double>
+            <Thickness x:Key="TreeViewItemExpandCollapseChevronMargin">4,0,2,0</Thickness>
+          </Border.Resources>
+          <Border.Styles>
+            <Style Selector="Button#ConnectionsButton">
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="BorderThickness" Value="0" />
+              <Setter Property="CornerRadius" Value="0" />
+              <Setter Property="Padding" Value="8,4,10,4" />
+              <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+              <Setter Property="MinHeight" Value="28" />
+            </Style>
+            <Style Selector="Button#ConnectionsButton:pointerover /template/ ContentPresenter">
+              <Setter Property="Background" Value="#e3ecf4" />
+            </Style>
+            <Style Selector="Button#ConnectionsButton:pressed /template/ ContentPresenter">
+              <Setter Property="Background" Value="#d3e1ee" />
+            </Style>
+            <Style Selector="TreeView#Tree">
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="Padding" Value="4,4" />
+              <Setter Property="FontSize" Value="13" />
+            </Style>
+            <Style Selector="TreeView#Tree TreeViewItem">
+              <Setter Property="MinHeight" Value="22" />
+              <Setter Property="Padding" Value="2,1" />
+              <Setter Property="FontSize" Value="13" />
+              <Setter Property="Foreground" Value="#1a65a7" />
+            </Style>
+            <Style Selector="TreeView#Tree TreeViewItem /template/ Border#PART_LayoutRoot">
+              <Setter Property="CornerRadius" Value="2" />
+            </Style>
+            <Style Selector="TreeView#Tree TreeViewItem:pointerover /template/ Border#PART_LayoutRoot">
+              <Setter Property="Background" Value="#e1ebf3" />
+            </Style>
+            <Style Selector="TreeView#Tree TreeViewItem:selected /template/ Border#PART_LayoutRoot">
+              <Setter Property="Background" Value="#cbdceb" />
+            </Style>
+            <Style Selector="Button.paneTool">
+              <Setter Property="Width" Value="24" />
+              <Setter Property="Height" Value="22" />
+              <Setter Property="Padding" Value="0" />
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="BorderThickness" Value="0" />
+              <Setter Property="CornerRadius" Value="3" />
+              <Setter Property="HorizontalContentAlignment" Value="Center" />
+              <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+            <Style Selector="Button.paneTool:pointerover /template/ ContentPresenter">
+              <Setter Property="Background" Value="#cbdceb" />
+            </Style>
+            <Style Selector="Button.paneTool:pressed /template/ ContentPresenter">
+              <Setter Property="Background" Value="#b9cfe3" />
+            </Style>
+          </Border.Styles>
+          <DockPanel>
+            <Border Name="ExplorerHeader" DockPanel.Dock="Top" Background="#e4edf6" BorderBrush="#d9e5f0" BorderThickness="0,0,0,1"
+                    Padding="12,0,4,0" Height="32" ToolTip.Tip="Drag to float or dock; double-click to float/dock">
+              <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2">
+                <TextBlock Text="Object Explorer" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center"
+                           Foreground="#1a65a7" TextTrimming="CharacterEllipsis" />
+                <Button Name="PaneMenuButton" Grid.Column="1" Classes="paneTool" ToolTip.Tip="Window Position">
+                  <Path Width="9" Height="5" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.5" Data="M0,0 L5,5 L10,0" />
+                </Button>
+                <Button Name="PanePinButton" Grid.Column="2" Classes="paneTool" ToolTip.Tip="Auto Hide">
+                  <Path Name="PanePinIcon" Width="10" Height="13" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.4"
+                        Data="M3,0 L9,0 M4,0 L4,6 M8,0 L8,6 M1,6 L11,6 M6,6 L6,12" />
+                </Button>
+                <Button Name="PaneCloseButton" Grid.Column="3" Classes="paneTool" ToolTip.Tip="Close (F8 to reopen)">
+                  <Path Width="9" Height="9" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.5" Data="M0,0 L10,10 M10,0 L0,10" />
+                </Button>
+              </Grid>
+            </Border>
+            <Button Name="ConnectionsButton" DockPanel.Dock="Top" Click="OnManage" ToolTip.Tip="Add Connection">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                <Path Width="14" Height="16" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.4"
+                      VerticalAlignment="Center"
+                      Data="M4,5 C4,1 20,1 20,5 C20,9 4,9 4,5 M4,5 L4,19 C4,23 20,23 20,19 L20,5 M4,12 C4,16 20,16 20,12" />
+                <TextBlock Grid.Column="1" Text="Connections" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Path Grid.Column="2" Width="10" Height="10" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.4"
+                      VerticalAlignment="Center" Data="M6,0 L6,12 M0,6 L12,6" />
+              </Grid>
+            </Button>
+            <!-- Filter-as-you-type over connections, databases and measurements (Ctrl+E). -->
+            <Border DockPanel.Dock="Top" Padding="8,2,8,4">
+              <TextBox Name="TreeFilter" Watermark="Filter (Ctrl+E)" FontSize="12" Padding="8,4" MinHeight="28">
+                <TextBox.InnerRightContent>
+                  <Button Name="TreeFilterClear" Classes="paneTool" IsVisible="False" ToolTip.Tip="Clear filter (Esc)" Margin="0,0,2,0">
+                    <Path Width="8" Height="8" Stretch="Uniform" Stroke="#1a65a7" StrokeThickness="1.5" Data="M0,0 L10,10 M10,0 L0,10" />
+                  </Button>
+                </TextBox.InnerRightContent>
+              </TextBox>
+            </Border>
+            <TreeView Name="Tree" ItemsSource="{Binding Nodes}" SelectedItem="{Binding SelectedNode, Mode=TwoWay}"
+                      PointerPressed="OnTreePointerPressed" DoubleTapped="OnTreeDoubleTapped">
+              <TreeView.Styles>
+                <Style Selector="TreeViewItem">
+                  <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                  <Setter Property="IsVisible" Value="{Binding IsShown}" />
+                </Style>
+              </TreeView.Styles>
+              <TreeView.DataTemplates>
+                <TreeDataTemplate DataType="vm:TreeNodeViewModel" ItemsSource="{Binding Children}">
+                  <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,6,0">
+                    <Image Width="16" Height="16" Source="{Binding IconName, Converter={StaticResource IconConverter}}" />
+                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </TreeDataTemplate>
+              </TreeView.DataTemplates>
+            </TreeView>
+          </DockPanel>
+        </Border>
+      </Border>
+      <GridSplitter Name="LeftSplitter" Grid.Column="2" Background="Transparent" ResizeDirection="Columns" />
+      <Panel Name="CenterArea" Grid.Column="3">
+        <TabControl Name="Tabs" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab, Mode=TwoWay}">
+          <TabControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </TabControl.ItemsPanel>
+          <TabControl.Template>
+            <ControlTemplate>
+              <DockPanel>
+                <ScrollViewer Name="DocumentTabScroll" DockPanel.Dock="Top"
+                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                              AllowAutoHide="True">
+                  <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+                </ScrollViewer>
+                <ContentPresenter Name="PART_SelectedContentHost"
+                                  Content="{TemplateBinding SelectedContent}"
+                                  ContentTemplate="{TemplateBinding SelectedContentTemplate}"
+                                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+              </DockPanel>
+            </ControlTemplate>
+          </TabControl.Template>
+          <TabControl.ItemTemplate>
+            <DataTemplate DataType="vm:TabViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="4" Background="Transparent" ToolTip.Tip="{Binding Title}">
+                <StackPanel.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="Close" Click="OnCloseTab" />
+                    <MenuItem Header="Close All But This" Click="OnCloseAllButThis" />
+                    <MenuItem Header="Close All" Click="OnCloseAll" />
+                  </ContextMenu>
+                </StackPanel.ContextMenu>
+                <Image Width="16" Height="16" Source="{Binding IconName, Converter={StaticResource IconConverter}}" />
+                <TextBlock Text="{Binding Title}" MaxWidth="300" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <Button Content="✕" Padding="4,0" Background="Transparent" BorderThickness="0" FontSize="10" Click="OnCloseTab" />
+              </StackPanel>
+            </DataTemplate>
+          </TabControl.ItemTemplate>
+          <TabControl.ContentTemplate>
+            <DataTemplate DataType="vm:TabViewModel">
+              <ContentControl Content="{Binding Content}" />
+            </DataTemplate>
+          </TabControl.ContentTemplate>
+        </TabControl>
+        <!-- Auto-hidden Object Explorer slides out over the documents here. -->
+        <Panel Name="FlyoutLayer" IsVisible="False" ClipToBounds="True" />
+      </Panel>
+      <GridSplitter Name="RightSplitter" Grid.Column="4" Background="Transparent" ResizeDirection="Columns" IsVisible="False" />
+      <Border Name="RightDockHost" Grid.Column="5" />
+      <Border Name="RightAutoHideStrip" Grid.Column="6" Background="#F0F5FB" BorderBrush="#d9e5f0" BorderThickness="1,0,0,0"
+              Padding="3,0" IsVisible="False" />
+      <!-- Dock targets shown while the Object Explorer title bar is dragged. -->
+      <Canvas Name="DockGuideLayer" Grid.Column="0" Grid.ColumnSpan="7" IsHitTestVisible="False" IsVisible="False" />
+    </Grid>
+  </DockPanel>
+</Window>

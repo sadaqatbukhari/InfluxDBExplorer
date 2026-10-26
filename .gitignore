@@ -1,0 +1,20 @@
+*.log
+*.bak
+*.old
+*.disabled
+*.zip
+unity/*
+packages/*
+# allow packages/repositories.config only
+!packages/repositories.config
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+*.suo
+*.user
+.vs/config/applicationhost.config
+.vs/
+src/*.Testing/*.xml
+ImagesRaw/

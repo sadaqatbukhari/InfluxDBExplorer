@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Tickbird.Core/Tickbird.Core.csproj" />
+  <Project Path="src/Tickbird.Desktop.Tests/Tickbird.Desktop.Tests.csproj" />
+  <Project Path="src/Tickbird.Desktop/Tickbird.Desktop.csproj" />
+  <Project Path="src/Tickbird.Tests/Tickbird.Tests.csproj" />
+</Solution>

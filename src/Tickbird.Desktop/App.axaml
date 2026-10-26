@@ -1,0 +1,224 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tickbird.Desktop.App"
+             RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#1a65a7" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+    <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+    <Style Selector="Window">
+      <Setter Property="Background" Value="#F1F7FD" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <!-- Shared action buttons, matching the connection editor. -->
+    <Style Selector="Button">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="Foreground" Value="#176FC1" />
+      <Setter Property="BorderBrush" Value="#8DB8E5" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button[IsDefault=True], Button.primary, Button.connectionPrimary, Button.connectionConnect">
+      <Setter Property="Background" Value="#176FC1" />
+      <Setter Property="BorderBrush" Value="#176FC1" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.connectionDanger">
+      <Setter Property="Foreground" Value="#D81730" />
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#EAF3FC" />
+      <Setter Property="BorderBrush" Value="#176FC1" />
+      <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+    </Style>
+    <Style Selector="Button:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="#DCEBFA" />
+      <Setter Property="BorderBrush" Value="#176FC1" />
+    </Style>
+    <Style Selector="Button[IsDefault=True]:pointerover /template/ ContentPresenter, Button.primary:pointerover /template/ ContentPresenter, Button.connectionPrimary:pointerover /template/ ContentPresenter, Button.connectionConnect:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#1462AB" />
+      <Setter Property="BorderBrush" Value="#1462AB" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button[IsDefault=True]:pressed /template/ ContentPresenter, Button.primary:pressed /template/ ContentPresenter, Button.connectionPrimary:pressed /template/ ContentPresenter, Button.connectionConnect:pressed /template/ ContentPresenter">
+      <Setter Property="Background" Value="#10538F" />
+      <Setter Property="BorderBrush" Value="#10538F" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button:disabled /template/ ContentPresenter">
+      <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}" />
+      <Setter Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}" />
+      <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}" />
+      <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="ContextMenu">
+      <Setter Property="Background" Value="#F1F7FD" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="4" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="MinWidth" Value="220" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem">
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem /template/ ContentControl#PART_IconPresenter">
+      <Setter Property="Width" Value="20" />
+      <Setter Property="Height" Value="20" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem:selected /template/ Border#PART_LayoutRoot">
+      <Setter Property="Background" Value="#e3ecf4" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem:pressed /template/ Border#PART_LayoutRoot:pointerover">
+      <Setter Property="Background" Value="#d3e1ee" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem:pressed /template/ ContentPresenter#PART_HeaderPresenter">
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="ContextMenu MenuItem:disabled /template/ ContentPresenter#PART_HeaderPresenter">
+      <Setter Property="Foreground" Value="#8da8c0" />
+    </Style>
+    <Style Selector="ContextMenu Separator">
+      <Setter Property="Background" Value="#d9e5f0" />
+      <Setter Property="Margin" Value="10,4" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="10,6" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="MinHeight" Value="34" />
+      <Setter Property="Padding" Value="10,6" />
+    </Style>
+    <Style Selector="NumericUpDown">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="MinHeight" Value="34" />
+    </Style>
+    <Style Selector="CalendarDatePicker">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="TimePicker">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#d9e5f0" />
+      <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="TabControl">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TabItem">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="TabItem:selected">
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="Background" Value="White" />
+    </Style>
+    <Style Selector="TabControl.queryResultTabs">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="0,4,0,0" />
+    </Style>
+    <Style Selector="TabControl.queryResultTabs TabItem">
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="MinHeight" Value="30" />
+      <Setter Property="Padding" Value="10,4" />
+    </Style>
+    <Style Selector="TabControl.queryResultTabs TabItem:selected">
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="Background" Value="White" />
+    </Style>
+    <Style Selector="DataGrid.tickbirdGrid DataGridColumnHeader">
+      <Setter Property="Background" Value="#eaf1f7" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="BorderBrush" Value="#e0eaf3" />
+    </Style>
+    <Style Selector="DataGrid.tickbirdGrid DataGridCell">
+      <Setter Property="Padding" Value="12,4" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <!-- Keep selection readable in query results and every metadata/admin table,
+         including when focus moves to a toolbar or another control. -->
+    <Style Selector="DataGrid.tickbirdGrid DataGridRow:selected">
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="DataGrid.tickbirdGrid DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+      <Setter Property="Fill" Value="#cbdceb" />
+    </Style>
+    <Style Selector="DataGrid.tickbirdGrid DataGridRow:selected /template/ Border#RowBorder">
+      <Setter Property="Background" Value="#cbdceb" />
+    </Style>
+    <Style Selector="DataGrid.tickbirdGrid DataGridCell /template/ Rectangle#FocusVisual">
+      <Setter Property="Stroke" Value="#1a65a7" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridColumnHeader">
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Background" Value="#E6ECF4" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="BorderBrush" Value="#d6e3ef" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridColumnHeader:pointerover">
+      <Setter Property="Background" Value="#dde8f2" />
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridRow">
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridRow:selected">
+      <Setter Property="Foreground" Value="#1a65a7" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+      <Setter Property="Fill" Value="#dfe9f3" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridRow:selected /template/ Border#RowBorder">
+      <Setter Property="Background" Value="#dfe9f3" />
+      <Setter Property="BorderBrush" Value="#1a65a7" />
+      <Setter Property="BorderThickness" Value="3,0,0,0" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridCell">
+      <Setter Property="Foreground" Value="#1a65a7" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="Window.manageConnections DataGrid.connectionsTable DataGridCell TextBlock">
+      <Setter Property="TextAlignment" Value="Left" />
+      <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+  </Application.Styles>
+</Application>
