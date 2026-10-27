@@ -130,7 +130,7 @@ Build the self-contained 64-bit Windows MSI from the repository root:
 .\installer\build-installer.ps1
 ```
 
-The installer builds the version in `Version.props` (currently **1.0.0**). Pass `-Bump` to raise the patch version first (`.\installer\build-installer.ps1 -Bump`). It creates an icon-branded
+The installer builds the version in `Version.props` (currently **1.1.0**). Pass `-Bump` to raise the patch version first (`.\installer\build-installer.ps1 -Bump`). It creates an icon-branded
 `Tickbird-<version>-Setup-win-x64.exe` and the underlying MSI in `artifacts\installer`.
 The installer asks whether to create a Desktop shortcut and always creates a Start Menu shortcut.
 It includes the .NET runtime, so the target computer does not need the .NET 10 runtime installed separately.
