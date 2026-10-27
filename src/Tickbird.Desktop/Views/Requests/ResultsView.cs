@@ -42,6 +42,7 @@ public sealed class ResultsView : UserControl
     }
 
     private readonly DataGrid grid = GridFactory.Create();
+    private readonly List<TextBlock> headerTexts = new();
     private readonly TextBlock tags = new()
     {
         Margin = new Thickness(10, 0), IsVisible = false, TextTrimming = TextTrimming.CharacterEllipsis,
@@ -96,6 +97,8 @@ public sealed class ResultsView : UserControl
                 Item("Clear Filter", ClearFilter),
                 new Separator(),
                 Item("Auto-size Columns", AutoSizeColumns),
+                EpochMenu("Epoch Time", () => CurrentDataColumn()),
+                Item("Copy Cell as Date/Time", CopyCellAsDate),
                 Item("Export All to CSV…", () => Export(false, true)),
                 Item("Export All to JSON…", () => Export(false, false)),
                 Item("Export Selected to CSV…", () => Export(true, true)),
@@ -206,17 +209,26 @@ public sealed class ResultsView : UserControl
         tags.Text = string.Join(", ", result.Tags.Select(t => $"{t.Key} = {t.Value}"));
         grid.ItemsSource = null;
         grid.Columns.Clear();
+        headerTexts.Clear();
         grid.Columns.Add(new DataGridTextColumn
         {
             Header = "#", Binding = new Binding("[0]"), IsReadOnly = true, CanUserResize = true, MinWidth = 40,
             Width = new DataGridLength(RowNumberWidth(result.Values.Count))
         });
+        var formatter = CurrentFormatter;
         for (var i = 0; i < result.Columns.Count; i++)
+        {
+            var index = i;
+            // The header is a text block so right-clicking it can offer the epoch conversion for this column.
+            var header = new TextBlock { Text = HeaderText(result.Columns[i]), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            header.ContextMenu = new ContextMenu { Items = { EpochMenu("Epoch Time", () => index) } };
+            headerTexts.Add(header);
             grid.Columns.Add(new DataGridTextColumn
             {
-                Header = result.Columns[i].Replace("_", "__"), Binding = new Binding($"[{i + 1}]"), IsReadOnly = true,
-                CanUserResize = true, MinWidth = 40, Width = new DataGridLength(FitWidth(result, i, TickbirdApp.Current.Formatter))
+                Header = header, Binding = new Binding($"[{i + 1}]"), IsReadOnly = true,
+                CanUserResize = true, MinWidth = 40, Width = new DataGridLength(FitWidth(result, i, formatter))
             });
+        }
         ApplyFilter();
         ApplyMode();
         return result.Values.Count;
@@ -357,11 +369,15 @@ public sealed class ResultsView : UserControl
     public void AutoSizeColumns()
     {
         if (last == null || grid.Columns.Count == 0) return;
-        var formatter = TickbirdApp.Current.Formatter;
+        var formatter = CurrentFormatter;
         grid.Columns[0].Width = new DataGridLength(RowNumberWidth(last.Values.Count));
         for (var i = 0; i < last.Columns.Count && i + 1 < grid.Columns.Count; i++)
             grid.Columns[i + 1].Width = new DataGridLength(FitWidth(shown ?? last, i, formatter));
     }
+
+    /// <summary>The text of a cell as the grid shows it: row = position in the shown rows, column 0 = the # column (for tests).</summary>
+    public string? CellText(int row, int column) =>
+        grid.ItemsSource is System.Collections.IList { } rows && row < rows.Count && rows[row] is ResultRow r ? r[column] : null;
 
     /// <summary>The results grid (exposed for tests).</summary>
     public DataGrid ResultsGrid => grid;
@@ -408,7 +424,8 @@ public sealed class ResultsView : UserControl
     {
         if (last == null) return;
         var filter = ChartSettings.Filter;
-        var formatter = TickbirdApp.Current.Formatter;
+        var formatter = CurrentFormatter;
+        UpdateHeaders();
         appliedFilterVersion = ChartSettings.FilterVersion;
         if (quickFilter.Text != filter.Text) quickFilter.Text = filter.Text;
 
@@ -542,6 +559,89 @@ public sealed class ResultsView : UserControl
         return item;
     }
 
+    // ------------------------------------------------------------------ epoch time columns
+
+    /// <summary>The user's formats plus this query's epoch columns.</summary>
+    private ResultFormatter CurrentFormatter => TickbirdApp.Current.Formatter.WithEpochColumns(ChartSettings.EpochColumns);
+
+    private static string HeaderText(string column) => column;
+
+    private void UpdateHeaders()
+    {
+        if (last == null) return;
+        for (var i = 0; i < headerTexts.Count && i < last.Columns.Count; i++)
+        {
+            var name = last.Columns[i];
+            headerTexts[i].Text = ChartSettings.EpochColumns.TryGetValue(name, out _) ? name + " (UTC)" : name;
+        }
+    }
+
+    /// <summary>Index (in the result's columns) of the column under the last click, or null for the # column.</summary>
+    private int? CurrentDataColumn()
+    {
+        if (grid.CurrentColumn == null) return null;
+        var column = grid.Columns.IndexOf(grid.CurrentColumn) - 1;     // column 0 is the row number
+        return column >= 0 ? column : null;
+    }
+
+    /// <summary>
+    /// A submenu to read the column's numbers as Unix epoch time and show them as dates, or to show them as numbers
+    /// again. <paramref name="column"/> says which column the menu acts on when it is used.
+    /// </summary>
+    private MenuItem EpochMenu(string header, Func<int?> column)
+    {
+        var menu = new MenuItem { Header = header };
+        foreach (var (text, unit) in new[]
+        {
+            ("Show as Date/Time (auto-detect unit)", EpochUnit.Auto),
+            ("Show as Date/Time (seconds)", EpochUnit.Seconds),
+            ("Show as Date/Time (milliseconds)", EpochUnit.Milliseconds),
+            ("Show as Date/Time (microseconds)", EpochUnit.Microseconds),
+            ("Show as Date/Time (nanoseconds)", EpochUnit.Nanoseconds)
+        })
+        {
+            var chosen = unit;
+            menu.Items.Add(Item(text, () => { if (column() is { } c) SetEpochColumn(c, chosen); }));
+        }
+        menu.Items.Add(new Separator());
+        menu.Items.Add(Item("Show as Number", () => { if (column() is { } c) SetEpochColumn(c, null); }));
+        return menu;
+    }
+
+    /// <summary>
+    /// Shows the result column at <paramref name="column"/> as a date, reading its numbers as epoch time in
+    /// <paramref name="unit"/> (UTC), or as the plain number again when <paramref name="unit"/> is null. The choice is
+    /// kept for the query tab, so it survives re-running the query. The <c>time</c> column is already a date.
+    /// </summary>
+    public void SetEpochColumn(int column, EpochUnit? unit)
+    {
+        if (last == null || column < 0 || column >= last.Columns.Count) return;
+        var name = last.Columns[column];
+        if (string.Equals(name, "time", StringComparison.OrdinalIgnoreCase)) return;
+        if (unit is { } chosen) ChartSettings.EpochColumns[name] = chosen;
+        else ChartSettings.EpochColumns.Remove(name);
+
+        ChartSettings.FilterChanged();      // the query's other result tabs rebuild their rows when shown
+        ApplyFilter();
+        if (column + 1 < grid.Columns.Count)
+            grid.Columns[column + 1].Width = new DataGridLength(FitWidth(shown ?? last, column, CurrentFormatter));
+    }
+
+    /// <summary>The unit a result column is shown as a date with, or null when it is shown as a number (for tests).</summary>
+    public EpochUnit? EpochUnitOfColumn(string column) =>
+        ChartSettings.EpochColumns.TryGetValue(column, out var unit) ? unit : null;
+
+    /// <summary>Right-click › Copy Cell as Date/Time: the cell's epoch number as a date (copies the plain text when it is not a number).</summary>
+    private async void CopyCellAsDate()
+    {
+        if (shown == null || grid.SelectedItem is not ResultRow row || CurrentDataColumn() is not { } column) return;
+        var cells = shown.Values[row.Index];
+        var value = column < cells.Count ? cells[column] : null;
+        var unit = ChartSettings.EpochColumns.TryGetValue(shown.Columns[column], out var chosen) ? chosen : EpochUnit.Auto;
+        var text = CurrentFormatter.FormatEpoch(value, unit) ?? row[column + 1] ?? string.Empty;
+        await SetClipboard(text);
+    }
+
     private IEnumerable<int> CurrentRow() => grid.SelectedItem is ResultRow r ? new[] { r.Index } : Array.Empty<int>();
 
     private HashSet<int> SelectedIndices() => grid.SelectedItems.OfType<ResultRow>().Select(r => r.Index).ToHashSet();
@@ -556,7 +656,7 @@ public sealed class ResultsView : UserControl
     private async void CopyRows(int[] rows)
     {
         if (shown == null || rows.Length == 0) return;
-        await SetClipboard(ResultExporter.ToTabSeparated(shown, TickbirdApp.Current.Formatter, rows));
+        await SetClipboard(ResultExporter.ToTabSeparated(shown, CurrentFormatter, rows));
     }
 
     private async Task SetClipboard(string text)
@@ -574,7 +674,7 @@ public sealed class ResultsView : UserControl
         var path = await FilePicker.SaveAsync(this, name, csv ? "CSV files" : "JSON files", csv ? "*.csv" : "*.json");
         if (path == null) return;
         var result = shown;   // export what is shown: the filtered rows
-        var formatter = TickbirdApp.Current.Formatter;
+        var formatter = CurrentFormatter;
         try
         {
             await Task.Run(() =>

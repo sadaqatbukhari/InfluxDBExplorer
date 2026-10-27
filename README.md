@@ -67,6 +67,7 @@ The following are planned features that are not yet implemented in the current v
    - [Query History](#query-history)
    - [Working with Large Query Results](#working-with-large-query-results)
    - [Exporting Database Query Results](#exporting-database-query-results)
+   - [Showing Epoch Numbers as Dates](#showing-epoch-numbers-as-dates)
    - [Filtering Query Results](#filtering-query-results)
    - [Charting Query Results](#charting-query-results)
    - [Mapping Query Results](#mapping-query-results)
@@ -348,6 +349,15 @@ export just the selected rows by using **CTRL + Left Click** and **Shift + Left 
 in the export context menu.
 
 ![Exporting Database Results](docs/img/Databases_ExportQueryResults.png?raw=true "Exporting Database Results")
+
+### Showing Epoch Numbers as Dates
+
+The `time` column is always shown as a date. Other columns that hold Unix epoch numbers (for example a field `ts` with `1792567815000`) are shown as plain numbers until you convert them:
+
+* **Right-click a cell › Epoch Time** or **right-click the column header › Epoch Time**, then choose **Show as Date/Time** with the unit of the numbers: **auto-detect**, **seconds**, **milliseconds**, **microseconds** or **nanoseconds**. Auto-detect uses the size of the number (below 10^11 is seconds, below 10^14 milliseconds, below 10^17 microseconds, otherwise nanoseconds).
+* The column then shows the date and time in your [date and time format](#settings-overview) in **UTC**, and its header gets a `(UTC)` suffix. Choose **Show as Number** to go back.
+* **Right-click a cell › Copy Cell as Date/Time** copies just that cell's value as a date, without converting the column.
+* The choice is kept for the query tab, so it stays when you run the query again, and the same applies to the query's other result tabs. Copy, **CSV** export and the row filter use the converted text; **JSON** export keeps the original numbers. Values that are not numbers, or are too far from 1970 to be a date, keep showing as they are.
 
 ### Filtering Query Results
 
