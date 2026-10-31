@@ -42,6 +42,79 @@ public static class Dialogs
     public static async Task<bool> ConfirmByNameAsync(Window owner, string title, string message, string name, string action = "Drop") =>
         await new ConfirmByNameWindow(title, message, name, action).ShowDialog<bool>(owner);
 
+    /// <summary>Asks for one line of text. Returns null when cancelled, otherwise the text (possibly empty).</summary>
+    public static async Task<string?> PromptTextAsync(Window owner, string title, string message, string? initial = null, string ok = "OK")
+    {
+        var input = new TextBox { Text = initial ?? "", MaxLength = 200, MinWidth = 340 };
+        var confirm = new Button { Content = ok, MinWidth = 80, IsDefault = true };
+        var cancel = new Button { Content = "Cancel", MinWidth = 80, IsCancel = true };
+        var window = new Window
+        {
+            Title = title, Width = 440, SizeToContent = SizeToContent.Height, CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        confirm.Click += (_, _) => window.Close(true);
+        cancel.Click += (_, _) => window.Close(false);
+        var content = new StackPanel { Margin = new Thickness(4), Spacing = 12 };
+        content.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(input);
+        content.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8,
+            Children = { confirm, cancel }
+        });
+        window.Content = TickbirdTheme.Card(content);
+        window.Opened += (_, _) => { input.Focus(); input.SelectAll(); };
+        return await window.ShowDialog<bool>(owner) ? input.Text ?? "" : null;
+    }
+
+    /// <summary>
+    /// Asks for a value for each query parameter. <paramref name="remembered"/> pre-fills the boxes. Returns null
+    /// when cancelled.
+    /// </summary>
+    public static async Task<Dictionary<string, string>?> PromptParametersAsync(
+        Window owner, IReadOnlyList<string> names, IReadOnlyDictionary<string, string> remembered)
+    {
+        var boxes = names.ToDictionary(n => n, n => new TextBox { Text = remembered.TryGetValue(n, out var v) ? v : "", MinWidth = 260 });
+        var confirm = new Button { Content = "Run", MinWidth = 80, IsDefault = true };
+        var cancel = new Button { Content = "Cancel", MinWidth = 80, IsCancel = true };
+        var window = new Window
+        {
+            Title = "Query Parameters", Width = 460, SizeToContent = SizeToContent.Height, CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        confirm.Click += (_, _) => window.Close(true);
+        cancel.Click += (_, _) => window.Close(false);
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), RowSpacing = 8, ColumnSpacing = 10 };
+        var row = 0;
+        foreach (var name in names)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetRow(label, row);
+            Grid.SetRow(boxes[name], row);
+            Grid.SetColumn(boxes[name], 1);
+            grid.Children.Add(label);
+            grid.Children.Add(boxes[name]);
+            row++;
+        }
+        var content = new StackPanel { Margin = new Thickness(4), Spacing = 12 };
+        content.Children.Add(new TextBlock
+        {
+            Text = "The query has parameters. The text you enter replaces {{name}} exactly as typed, so add quotes for text values.",
+            TextWrapping = TextWrapping.Wrap
+        });
+        content.Children.Add(grid);
+        content.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8,
+            Children = { confirm, cancel }
+        });
+        window.Content = TickbirdTheme.Card(content);
+        window.Opened += (_, _) => boxes[names[0]].Focus();
+        return await window.ShowDialog<bool>(owner) ? boxes.ToDictionary(p => p.Key, p => p.Value.Text ?? "") : null;
+    }
+
     /// <summary>The window behind <see cref="ConfirmWithOptionAsync"/>.</summary>
     public sealed class OptionConfirmWindow : Window
     {

@@ -58,11 +58,11 @@ public sealed class QueryView : RequestView
 
     public QueryView()
     {
-        Background = Brush.Parse("#F1F7FD");
+        Background = Brushes.White;
         results.Classes.Add("queryResultTabs");
         editor.Options.HighlightCurrentLine = true;
         editor.TextArea.SelectionBrush = Brush.Parse("#ADD6FF");
-        editor.TextArea.TextView.CurrentLineBackground = Brush.Parse("#F1F8FF");
+        editor.TextArea.TextView.CurrentLineBackground = Brushes.White;
         editor.TextArea.TextView.CurrentLineBorder = new Pen(Brushes.Transparent);
         editor.TextArea.TextView.LineTransformers.Add(new InfluxQlColorizer());
         // Tunnel so Ctrl+Space reaches us before the editor treats it as typing.
@@ -159,6 +159,35 @@ public sealed class QueryView : RequestView
                            + $"{completion.TagCount} tags. Press Ctrl+Space for suggestions.";
     }
 
+    private static readonly Dictionary<string, string> lastParameterValues = new(StringComparer.Ordinal);
+
+    /// <summary>Saves the selection, or the whole editor text, as a named snippet.</summary>
+    public async Task SaveSnippetAsync()
+    {
+        var text = QueryText.TextToExecute(editor.SelectedText, editor.Text);
+        if (OwnerWindow == null) return;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await Dialogs.ShowMessageAsync(OwnerWindow, "Save Snippet", "Select or enter a query to save.");
+            return;
+        }
+        var name = await Dialogs.PromptTextAsync(OwnerWindow, "Save Snippet",
+            "Name for this snippet. Saving under an existing name replaces that snippet. Use {{name}} in the query for values asked when it runs.", null, ok: "Save");
+        if (string.IsNullOrWhiteSpace(name)) return;
+        TickbirdApp.Current.Snippets.Save(name, text);
+        summary.Text = $"Snippet \"{name.Trim()}\" saved.";
+    }
+
+    /// <summary>Lets the user pick a snippet and puts it at the caret (replacing the selection).</summary>
+    public async Task InsertSnippetAsync()
+    {
+        if (OwnerWindow == null) return;
+        var text = await new SnippetsWindow(TickbirdApp.Current.Snippets).ShowDialog<string?>(OwnerWindow);
+        if (text == null) return;
+        editor.TextArea.Selection.ReplaceSelectionWithText(text);
+        editor.Focus();
+    }
+
     public override async Task ExecuteAsync()
     {
         if (Client == null) throw new InvalidOperationException("No InfluxDB client available.");
@@ -169,6 +198,15 @@ public sealed class QueryView : RequestView
             return;
         }
         if (IsRunning) return;
+        var parameters = QueryParameters.Find(query);
+        if (parameters.Count > 0)
+        {
+            if (OwnerWindow == null) return;
+            var values = await Dialogs.PromptParametersAsync(OwnerWindow, parameters, lastParameterValues);
+            if (values == null) return;
+            foreach (var pair in values) lastParameterValues[pair.Key] = pair.Value;
+            query = QueryParameters.Apply(query, values);
+        }
         var label = QueryText.IsAggregate(query) ? "Group" : "Results";
         var timeoutSeconds = TickbirdApp.Current.Settings.QueryTimeoutSeconds;
         using var cancel = new CancellationTokenSource();

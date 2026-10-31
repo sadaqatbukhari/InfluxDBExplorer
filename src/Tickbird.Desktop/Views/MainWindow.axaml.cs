@@ -64,7 +64,47 @@ public partial class MainWindow : Window
             if (!showConnectionsOnStart) return;
             await Task.Delay(250);
             if (IsVisible) await ShowConnectionsDialog();
+            if (IsVisible && app.Settings.ShowGettingStarted) ShowGettingStarted();
         });
+    }
+
+    private GettingStartedWindow? gettingStarted;
+
+    private void OnGettingStarted(object? s, RoutedEventArgs e) => ShowGettingStarted();
+
+    /// <summary>Opens the Getting Started guide beside the main window (or brings it forward).</summary>
+    public void ShowGettingStarted()
+    {
+        if (gettingStarted != null) { gettingStarted.Activate(); return; }
+        var startedUtc = DateTime.UtcNow;
+        bool OnDatabase() => Node is { Kind: NodeKind.Database or NodeKind.Measurement };
+        var steps = new List<GuideStep>
+        {
+            new("1. Add a connection", "Enter the address of your InfluxDB server and save it.",
+                () => app.Settings.Connections.Count > 0, "Add Connection…", () => Run(ShowConnectionsDialog)),
+            new("2. Connect and pick a database", "In Manage Connections choose your server and click Connect. Then expand it in the Object Explorer and click a database.",
+                () => CurrentQueryView != null || OnDatabase()),
+            new("3. Open a query", "With a database selected, open a query tab. Its editor starts with a sample query you can change.",
+                () => CurrentQueryView != null, "New Query", () => Run(() => Do(NewQuery)), OnDatabase),
+            new("4. Run the query", "Press F5 (or Ctrl+E) in the editor. Select part of the text to run only that part. Results appear below.",
+                () => app.History.Entries.Count > 0 && app.History.Entries[0].RunAtUtc >= startedUtc,
+                "Run Query (F5)", () => Run(RunCurrent), () => CurrentQueryView != null),
+        };
+        var window = gettingStarted = new GettingStartedWindow(steps, app.Settings.ShowGettingStarted);
+        window.Closed += (_, _) =>
+        {
+            gettingStarted = null;
+            var show = window.ShowAtStartup.IsChecked == true;
+            if (app.Settings.ShowGettingStarted == show) return;
+            app.Settings.ShowGettingStarted = show;
+            app.Save();
+        };
+        window.Opened += (_, _) =>
+        {
+            var scale = DesktopScaling;
+            window.Position = new PixelPoint(Position.X + (int)((Bounds.Width - window.Width - 24) * scale), Position.Y + (int)(110 * scale));
+        };
+        window.Show(this);
     }
 
     private async Task ShowUpdateNoticeAsync()
@@ -312,6 +352,8 @@ public partial class MainWindow : Window
     private void OnFind(object? s, RoutedEventArgs e) => CurrentQueryView?.ShowFind(replace: false);
     private void OnReplace(object? s, RoutedEventArgs e) => CurrentQueryView?.ShowFind(replace: true);
     private void OnShowQueryHistory(object? s, RoutedEventArgs e) => ShowQueryHistory();
+    private async void OnSaveSnippet(object? s, RoutedEventArgs e) { if (CurrentQueryView is { } q) await Run(q.SaveSnippetAsync); }
+    private async void OnSnippets(object? s, RoutedEventArgs e) { if (CurrentQueryView is { } q) await Run(q.InsertSnippetAsync); }
 
     private async void OnQueryTimeout(object? s, RoutedEventArgs e)
     {
@@ -732,7 +774,7 @@ public partial class MainWindow : Window
     {
         app.History.Prune();
         if (Vm.FocusExisting(QueryHistoryTabId)) return;
-        var view = new QueryHistoryView(app.History, OpenFromHistoryAsync);
+        var view = new QueryHistoryView(app.History, OpenFromHistoryAsync, RunFromHistoryAsync);
         Vm.AddTab(new TabViewModel(QueryHistoryTabId, "Query History", TabKind.Tool, null, "History", view));
     }
 
@@ -740,7 +782,12 @@ public partial class MainWindow : Window
     /// Reopens a history entry in a new query tab on its connection and database. When that server is not
     /// connected yet, it is connected first (and shown in the Object Explorer), so the query can be run at once.
     /// </summary>
-    public async Task OpenFromHistoryAsync(QueryHistoryEntry entry)
+    public Task OpenFromHistoryAsync(QueryHistoryEntry entry) => OpenFromHistoryAsync(entry, run: false);
+
+    /// <summary>Opens a history entry in a new query tab and runs it at once.</summary>
+    public Task RunFromHistoryAsync(QueryHistoryEntry entry) => OpenFromHistoryAsync(entry, run: true);
+
+    private async Task OpenFromHistoryAsync(QueryHistoryEntry entry, bool run)
     {
         var connection = app.Settings.Connections.FirstOrDefault(c => c.Id == entry.ConnectionId);
         if (connection == null)
@@ -753,7 +800,8 @@ public partial class MainWindow : Window
         await Run(async () =>
         {
             if (Vm.FindConnectionNode(connection.Id) == null && !await ConnectForHistoryAsync(connection, entry.Database)) return;
-            OpenQueryTab(connection, entry.Database, entry.Query);
+            var tab = OpenQueryTab(connection, entry.Database, entry.Query);
+            if (run) await tab.ExecuteAsync();
         });
     }
 

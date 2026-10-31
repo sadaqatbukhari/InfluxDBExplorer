@@ -494,6 +494,28 @@ public partial class MainWindow
 
     private void OnWindowKeyDownTunnel(object? s, KeyEventArgs e)
     {
+        // SQL Server Management Studio shortcuts: F5 and Ctrl+E run the query. F5 still refreshes when the
+        // Object Explorer has the focus, and Ctrl+E still jumps to the tree filter outside a query editor.
+        if (CurrentQueryView != null && e.KeyModifiers == KeyModifiers.None && e.Key == Key.F5
+            && !ExplorerPane.IsKeyboardFocusWithin)
+        {
+            e.Handled = true;
+            _ = Run(RunCurrent);
+            return;
+        }
+        if (e.Key == Key.F5 && e.KeyModifiers == KeyModifiers.None)
+        {
+            e.Handled = true;
+            _ = Run(() => Do(RefreshNode));
+            return;
+        }
+        if (CurrentQueryView is { } editor && e.Key == Key.E && e.KeyModifiers == KeyModifiers.Control
+            && editor.IsKeyboardFocusWithin)
+        {
+            e.Handled = true;
+            _ = Run(RunCurrent);
+            return;
+        }
         if (e.Key == Key.E && e.KeyModifiers == KeyModifiers.Control)
         {
             e.Handled = true;
