@@ -655,6 +655,6 @@ To import application settings, including all configured InfluxDB server connect
 
 ## License
 
-Code and documentation are available according to the *MIT* License (see [LICENSE](https://github.com/sadaqatbukhari/Tickbird/blob/main/LICENSE)).
+Code and documentation are available according to the *MIT* License (see [LICENSE](https://github.com/sadaqatbukhari/Tickbird/blob/master/LICENSE)).
 
 Third-party components and their licenses are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
